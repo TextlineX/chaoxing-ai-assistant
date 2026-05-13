@@ -4,6 +4,7 @@
 // @version      24.1
 // @description  支持全题型 AI 回填，集成 UEditor 粘贴解锁。支持题目解析提取与展示。
 // @author       Textline
+// @license      MIT
 // @match        https://mooc1.chaoxing.com/mooc-ans/mooc2/work/view*
 // @grant        GM_setClipboard
 // @grant        GM_addStyle
