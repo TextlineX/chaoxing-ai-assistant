@@ -6,6 +6,7 @@
 // @author       Textline
 // @license      MIT
 // @match        https://mooc1.chaoxing.com/mooc-ans/mooc2/work/view*
+// @match        https://mooc1.chaoxing.com/mooc-ans/mooc2/work/dowork*
 // @grant        GM_setClipboard
 // @grant        GM_addStyle
 // @run-at       document-end
