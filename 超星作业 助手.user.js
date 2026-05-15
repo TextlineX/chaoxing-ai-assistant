@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         超星作业 AI 助手
 // @namespace    https://github.com/TextlineX/chaoxing-ai-assistant
-// @version      24.1
+// @version      24.2
 // @description  支持全题型 AI 回填，集成 UEditor 粘贴解锁。支持题目解析提取与展示。
 // @author       Textline
 // @license      MIT
