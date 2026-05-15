@@ -146,6 +146,143 @@
             flex-direction: column;
             max-height: min(82vh, 760px);
         }
+        #yan-wizard-mask {
+            position: fixed;
+            inset: 0;
+            background: rgba(13, 22, 39, 0.42);
+            backdrop-filter: blur(8px);
+            z-index: 9999997;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 220ms ease;
+        }
+        #yan-wizard-mask.is-open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        #yan-wizard-panel {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            z-index: 9999998;
+            width: min(440px, calc(100vw - 32px));
+            border-radius: 24px;
+            background: rgba(255,255,255,0.98);
+            box-shadow: 0 26px 70px rgba(0,0,0,0.22);
+            border: 1px solid rgba(255,255,255,0.72);
+            overflow: hidden;
+            opacity: 0;
+            transform: translate(-50%, -46%) scale(0.96);
+            pointer-events: none;
+            transition: opacity 220ms ease, transform 260ms cubic-bezier(.2,.9,.2,1);
+        }
+        #yan-wizard-panel.is-open {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            pointer-events: auto;
+        }
+        .yan-wizard-shell {
+            display: flex;
+            flex-direction: column;
+        }
+        .yan-wizard-head {
+            padding: 18px 18px 14px;
+            background: linear-gradient(180deg, #fdfefe 0%, #f3f7ff 100%);
+            border-bottom: 1px solid #e8eef9;
+        }
+        .yan-wizard-head-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: flex-start;
+        }
+        .yan-wizard-title {
+            margin: 0;
+            font-size: 17px;
+            font-weight: 900;
+            color: #20324a;
+        }
+        .yan-wizard-subtitle {
+            margin-top: 8px;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #61738b;
+        }
+        .yan-wizard-body {
+            padding: 16px 18px 18px;
+        }
+        .yan-wizard-step {
+            display: grid;
+            gap: 10px;
+            padding: 14px;
+            border-radius: 18px;
+            background: linear-gradient(180deg, #fbfcff 0%, #f8fbff 100%);
+            border: 1px solid #edf1f7;
+            margin-bottom: 12px;
+        }
+        .yan-wizard-step:last-child {
+            margin-bottom: 0;
+        }
+        .yan-wizard-step-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 900;
+            color: #21314a;
+            font-size: 14px;
+        }
+        .yan-wizard-step-number {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            background: linear-gradient(135deg, #3e76ff 0%, #1a57e8 100%);
+            box-shadow: 0 10px 20px rgba(34, 89, 226, 0.16);
+            flex: 0 0 auto;
+        }
+        .yan-wizard-step p {
+            margin: 0;
+            font-size: 13px;
+            line-height: 1.65;
+            color: #5d6f86;
+        }
+        .yan-wizard-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+        .yan-wizard-btn {
+            flex: 1 1 140px;
+            border: none;
+            border-radius: 14px;
+            padding: 12px 14px;
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+        }
+        .yan-wizard-btn:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.02);
+        }
+        .yan-wizard-btn.primary {
+            color: #fff;
+            background: linear-gradient(135deg, #3e76ff 0%, #1a57e8 100%);
+            box-shadow: 0 12px 24px rgba(34, 89, 226, 0.18);
+        }
+        .yan-wizard-btn.secondary {
+            color: #243449;
+            background: #eff4ff;
+            border: 1px solid #dbe5fb;
+        }
+        .yan-wizard-btn.secondary:hover {
+            background: #e7efff;
+            color: #1f3357;
+        }
         .yan-header {
             padding: 14px 16px 12px;
             background: linear-gradient(180deg, #fafcff 0%, #eff5ff 100%);
@@ -187,36 +324,6 @@
         .yan-body {
             padding: 14px;
             overflow: auto;
-        }
-        .yan-intro {
-            display: grid;
-            gap: 6px;
-            margin-top: 10px;
-        }
-        .yan-intro-item {
-            display: flex;
-            gap: 8px;
-            align-items: flex-start;
-            font-size: 12px;
-            line-height: 1.5;
-            color: #5d6f86;
-        }
-        .yan-intro-index {
-            flex: 0 0 auto;
-            min-width: 20px;
-            height: 20px;
-            border-radius: 999px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: 800;
-            color: #fff;
-            background: linear-gradient(135deg, #3e76ff 0%, #1a57e8 100%);
-            box-shadow: 0 8px 16px rgba(34, 89, 226, 0.14);
-        }
-        .yan-intro-text strong {
-            color: #21314a;
         }
         .yan-tabs {
             display: grid;
@@ -288,7 +395,7 @@
             cursor: pointer;
             font-weight: 700;
             font-size: 14px;
-            color: #fff;
+            color: #eaf1ff;
             text-align: left;
             border-radius: 14px;
             box-shadow: 0 8px 18px rgba(0,0,0,0.1);
@@ -305,6 +412,16 @@
         #btn-export { background: linear-gradient(135deg, #364a63 0%, #243449 100%); }
         #btn-import { background: linear-gradient(135deg, #25b46b 0%, #18a35d 100%); }
         #btn-reset { background: linear-gradient(135deg, #f59b23 0%, #e77b12 100%); }
+        #btn-wizard {
+            background: linear-gradient(135deg, #f8fbff 0%, #eef4ff 100%);
+            color: #243449;
+            border: 1px solid #dbe5fb;
+            box-shadow: 0 8px 18px rgba(25, 53, 96, 0.06);
+        }
+        #btn-wizard:hover {
+            color: #1f3357;
+            background: linear-gradient(135deg, #eff4ff 0%, #e4ecff 100%);
+        }
         .yan-settings {
             display: grid;
             gap: 12px;
@@ -351,9 +468,25 @@
             margin-top: 4px;
             line-height: 1.4;
         }
+        .yan-switch strong {
+            color: #21314a;
+        }
         .yan-switch input {
             width: 18px;
             height: 18px;
+        }
+        .yan-setting-select {
+            width: 100%;
+            padding: 11px 12px;
+            border: 1px solid #dfe6f1;
+            border-radius: 14px;
+            background: #fff;
+            color: #22324a;
+            font-weight: 700;
+            outline: none;
+        }
+        .yan-setting-select option {
+            color: #22324a;
         }
         #yan-log {
             height: 160px;
@@ -456,6 +589,7 @@
         reducedMotion: false,
         autoOpenPage: 'basic'
     };
+    const WIZARD_SEEN_KEY = 'chaoxing-ai-assistant.wizard-seen.v1';
 
     const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
@@ -543,6 +677,9 @@
         if (controls.autoOpenPage) controls.autoOpenPage.value = uiSettings.autoOpenPage;
     };
 
+    const hasSeenWizard = () => localStorage.getItem(WIZARD_SEEN_KEY) === '1';
+    const markWizardSeen = () => localStorage.setItem(WIZARD_SEEN_KEY, '1');
+
     const applyBallPosition = (ball, left, top) => {
         const size = getBallSize();
         const maxLeft = Math.max(DEFAULT_MARGIN, window.innerWidth - size - DEFAULT_MARGIN);
@@ -590,7 +727,7 @@
                 <span class="yan-field-label">${label}</span>
                 <span class="yan-field-value">切换面板默认页</span>
             </div>
-            <select id="${id}" style="width:100%;padding:11px 12px;border:1px solid #dfe6f1;border-radius:14px;background:#fff;color:#22324a;font-weight:700;outline:none;">
+            <select id="${id}" class="yan-setting-select">
                 ${options.map((opt) => `<option value="${opt.value}">${opt.label}</option>`).join('')}
             </select>
         </div>
@@ -699,6 +836,43 @@
         ball.innerHTML = '<span>AI 助手</span>';
         document.body.appendChild(ball);
 
+        const wizardMask = document.createElement('div');
+        wizardMask.id = 'yan-wizard-mask';
+        wizardMask.innerHTML = `
+            <div id="yan-wizard-panel">
+                <div class="yan-wizard-shell">
+                    <div class="yan-wizard-head">
+                        <div class="yan-wizard-head-top">
+                            <div>
+                                <h2 class="yan-wizard-title">配置向导</h2>
+                                <div class="yan-wizard-subtitle">这个向导是单独的面板。第一次会自动出现，关闭后也可以从主面板再次打开。</div>
+                            </div>
+                            <button id="yan-wizard-close" class="yan-close" type="button" aria-label="关闭向导">×</button>
+                        </div>
+                    </div>
+                    <div class="yan-wizard-body">
+                        <div class="yan-wizard-step">
+                            <div class="yan-wizard-step-head"><span class="yan-wizard-step-number">1</span> 基本操作</div>
+                            <p>导出题目、一键回填、恢复默认参数。先把最常用的动作放在这里，方便你直接开干。</p>
+                        </div>
+                        <div class="yan-wizard-step">
+                            <div class="yan-wizard-step-head"><span class="yan-wizard-step-number">2</span> 输出</div>
+                            <p>看导出内容、回填结果和解析日志。这里负责把过程和结果展示清楚。</p>
+                        </div>
+                        <div class="yan-wizard-step">
+                            <div class="yan-wizard-step-head"><span class="yan-wizard-step-number">3</span> 设置</div>
+                            <p>调浮球大小、动效、透明度和默认打开页。需要怎么用，直接在这里调。</p>
+                        </div>
+                        <div class="yan-wizard-actions">
+                            <button id="yan-wizard-start" class="yan-wizard-btn primary" type="button">开始使用</button>
+                            <button id="yan-wizard-never" class="yan-wizard-btn secondary" type="button">关闭并记住</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(wizardMask);
+
         const panel = document.createElement('div');
         panel.id = 'yan-panel';
         panel.innerHTML = `
@@ -708,20 +882,6 @@
                         <div class="yan-title-wrap">
                             <span class="yan-title">超星全能助手</span>
                             <span class="yan-subtitle">拖动球体可以换位置，面板里分成基本操作、输出和设置三块。</span>
-                            <div class="yan-intro">
-                                <div class="yan-intro-item">
-                                    <span class="yan-intro-index">1</span>
-                                    <div class="yan-intro-text"><strong>基本操作</strong>：导出题目、一键回填、恢复默认参数。</div>
-                                </div>
-                                <div class="yan-intro-item">
-                                    <span class="yan-intro-index">2</span>
-                                    <div class="yan-intro-text"><strong>输出</strong>：看导出内容、回填结果和解析日志。</div>
-                                </div>
-                                <div class="yan-intro-item">
-                                    <span class="yan-intro-index">3</span>
-                                    <div class="yan-intro-text"><strong>设置</strong>：调浮球大小、动效、透明度和默认打开页。</div>
-                                </div>
-                            </div>
                         </div>
                         <div style="display:flex;align-items:flex-start;gap:8px;">
                             <button id="yan-close" class="yan-close" type="button" aria-label="关闭面板">×</button>
@@ -762,6 +922,7 @@
                             <div class="yan-section-title">设置</div>
                             <div class="yan-section-desc">这些参数会立即生效并保存到本地。</div>
                             <div class="yan-settings">
+                                <button id="btn-wizard" class="yan-btn" type="button">🧭 配置向导</button>
                                 ${createRangeField('yan-setting-ball-size', '浮球大小', 52, 92, 1, ' px', uiSettings.ballSize)}
                                 ${createRangeField('yan-setting-float-duration', '浮动速度', 2.8, 8, 0.1, ' s', uiSettings.floatDuration.toFixed(1))}
                                 ${createRangeField('yan-setting-panel-width', '面板宽度', 300, 480, 10, ' px', uiSettings.panelWidth)}
@@ -799,6 +960,11 @@
 
         const pageMap = Array.from(panel.querySelectorAll('.yan-page'));
         const tabButtons = Array.from(panel.querySelectorAll('.yan-tab'));
+        const wizardPanel = document.getElementById('yan-wizard-panel');
+        const wizardClose = document.getElementById('yan-wizard-close');
+        const wizardStart = document.getElementById('yan-wizard-start');
+        const wizardNever = document.getElementById('yan-wizard-never');
+        const wizardOpeners = [document.getElementById('btn-wizard')].filter(Boolean);
 
         const setPage = (page) => {
             tabButtons.forEach((btn) => btn.classList.toggle('is-active', btn.dataset.page === page));
@@ -816,6 +982,17 @@
             requestAnimationFrame(() => panel.classList.add('is-open'));
         };
 
+        const showWizard = () => {
+            wizardMask.classList.add('is-open');
+            wizardPanel.classList.add('is-open');
+            markWizardSeen();
+        };
+
+        const hideWizard = () => {
+            wizardPanel.classList.remove('is-open');
+            wizardMask.classList.remove('is-open');
+        };
+
         tabButtons.forEach((btn) => {
             btn.addEventListener('click', () => {
                 setPage(btn.dataset.page);
@@ -823,6 +1000,16 @@
                 saveSettings(uiSettings);
             });
         });
+
+        wizardOpeners.forEach((button) => {
+            button.addEventListener('click', showWizard);
+        });
+        wizardMask.addEventListener('click', (event) => {
+            if (event.target === wizardMask) hideWizard();
+        });
+        wizardClose.addEventListener('click', hideWizard);
+        wizardStart.addEventListener('click', hideWizard);
+        wizardNever.addEventListener('click', hideWizard);
 
         const drag = {
             active: false,
@@ -933,6 +1120,10 @@
 
         if (!uiSettings.rememberPosition) {
             localStorage.removeItem(STORAGE_KEYS.ballPosition);
+        }
+
+        if (!hasSeenWizard()) {
+            setTimeout(showWizard, 300);
         }
 
         // 导出逻辑：增加解析要求
