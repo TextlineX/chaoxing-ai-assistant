@@ -1,0 +1,40 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="120" y1="64" x2="400" y2="456" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7ED0FF"/>
+      <stop offset="0.45" stop-color="#3B8DFF"/>
+      <stop offset="1" stop-color="#1657E6"/>
+    </linearGradient>
+    <radialGradient id="shine" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(176 152) rotate(57) scale(132 120)">
+      <stop stop-color="white" stop-opacity="0.95"/>
+      <stop offset="0.38" stop-color="white" stop-opacity="0.38"/>
+      <stop offset="1" stop-color="white" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="panel" x1="176" y1="170" x2="336" y2="346" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#DDEBFF" stop-opacity="0.95"/>
+    </linearGradient>
+    <filter id="shadow" x="56" y="48" width="400" height="400" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="20" stdDeviation="18" flood-color="#0B2F78" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+
+  <circle cx="256" cy="256" r="188" fill="url(#bg)" filter="url(#shadow)"/>
+  <circle cx="208" cy="172" r="112" fill="url(#shine)"/>
+  <path d="M160 176C160 128.516 198.516 90 246 90H300C347.484 90 386 128.516 386 176V276C386 323.484 347.484 362 300 362H214L146 414V362C122.739 362 104 343.261 104 320V208C104 183.817 127.817 176 160 176Z" fill="url(#panel)"/>
+
+  <path d="M194 204H318C328.493 204 337 212.507 337 223C337 233.493 328.493 242 318 242H194C183.507 242 175 233.493 175 223C175 212.507 183.507 204 194 204Z" fill="#3B77FF"/>
+  <path d="M194 256H282C292.493 256 301 264.507 301 275C301 285.493 292.493 294 282 294H194C183.507 294 175 285.493 175 275C175 264.507 183.507 256 194 256Z" fill="#6E9EFF"/>
+
+  <circle cx="342" cy="176" r="30" fill="#FFFFFF" fill-opacity="0.94"/>
+  <path d="M342 156L349.18 168.82L362 176L349.18 183.18L342 196L334.82 183.18L322 176L334.82 168.82L342 156Z" fill="#F59E0B"/>
+
+  <path d="M134 330C134 316.745 144.745 306 158 306H252C265.255 306 276 316.745 276 330C276 343.255 265.255 354 252 354H196L168 378V354H158C144.745 354 134 343.255 134 330Z" fill="#D7E7FF" fill-opacity="0.95"/>
+  <circle cx="170" cy="330" r="10" fill="#2563EB"/>
+  <circle cx="202" cy="330" r="10" fill="#2563EB"/>
+  <circle cx="234" cy="330" r="10" fill="#2563EB"/>
+
+  <path d="M368 312C391.196 312 410 330.804 410 354C410 377.196 391.196 396 368 396C344.804 396 326 377.196 326 354C326 330.804 344.804 312 368 312Z" fill="#FFFFFF" fill-opacity="0.92"/>
+  <path d="M368 334L372.58 343.42L382 348L372.58 352.58L368 362L363.42 352.58L354 348L363.42 343.42L368 334Z" fill="#3B77FF"/>
+  <path d="M390 322L392.4 327.6L398 330L392.4 332.4L390 338L387.6 332.4L382 330L387.6 327.6L390 322Z" fill="#FFFFFF" fill-opacity="0.95"/>
+</svg>
