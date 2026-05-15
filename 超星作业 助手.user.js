@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         超星作业 AI 助手
 // @namespace    https://github.com/TextlineX/chaoxing-ai-assistant
-// @version      24.3
+// @version      24.5
 // @description  支持全题型 AI 回填，集成 UEditor 粘贴解锁。支持题目解析提取与展示。
 // @author       Textline
 // @license      MIT
@@ -30,21 +30,27 @@
     };
 
     GM_addStyle(`
+        :root {
+            --yan-panel-width: 360px;
+            --yan-panel-opacity: 0.97;
+            --yan-float-duration: 4.8s;
+            --yan-ball-size: 64px;
+        }
         #yan-ball {
             position: fixed;
             left: 20px;
             top: 20px;
-            width: 64px;
-            height: 64px;
+            width: var(--yan-ball-size);
+            height: var(--yan-ball-size);
             background:
-                radial-gradient(circle at 32% 28%, rgba(255,255,255,0.96) 0 10%, rgba(255,255,255,0.35) 11%, rgba(255,255,255,0) 32%),
-                radial-gradient(circle at 35% 28%, rgba(255,255,255,0.38) 0 18%, rgba(255,255,255,0) 30%),
-                linear-gradient(145deg, #49b4ff 0%, #1d8dff 45%, #0c62ea 100%);
+                radial-gradient(circle at 28% 24%, rgba(255,255,255,0.98) 0 8%, rgba(255,255,255,0.38) 10%, rgba(255,255,255,0) 30%),
+                radial-gradient(circle at 68% 72%, rgba(31,145,255,0.24) 0 14%, rgba(31,145,255,0) 54%),
+                linear-gradient(145deg, #58b9ff 0%, #2d93ff 40%, #0f68ef 100%);
             border-radius: 46% 54% 52% 48% / 44% 42% 58% 56%;
             box-shadow:
-                0 18px 30px rgba(8, 72, 170, 0.28),
-                inset 0 1px 3px rgba(255,255,255,0.35),
-                inset 0 -8px 16px rgba(0,0,0,0.14);
+                0 18px 34px rgba(8, 72, 170, 0.28),
+                inset 0 1px 3px rgba(255,255,255,0.45),
+                inset 0 -10px 18px rgba(0,0,0,0.14);
             cursor: grab;
             z-index: 9999999;
             display: flex;
@@ -58,79 +64,370 @@
             -webkit-user-select: none;
             touch-action: none;
             overflow: hidden;
-            transition: box-shadow 0.25s ease, transform 0.25s ease, filter 0.25s ease;
-            animation: yan-float 4.8s ease-in-out infinite, yan-breathe 3.2s ease-in-out infinite;
-            will-change: transform, left, top;
+            transition: box-shadow 0.22s ease, filter 0.22s ease;
+            animation: yan-morph var(--yan-float-duration) ease-in-out infinite, yan-breathe 3.1s ease-in-out infinite, yan-drift 7.8s ease-in-out infinite;
+            will-change: transform, left, top, border-radius;
         }
         #yan-ball::before {
             content: "";
             position: absolute;
-            inset: 8% 18% 52% 18%;
-            border-radius: 50%;
-            background: linear-gradient(to bottom, rgba(255,255,255,0.7), rgba(255,255,255,0));
-            filter: blur(1px);
+            inset: -12%;
+            border-radius: 48% 52% 54% 46% / 50% 46% 54% 50%;
+            background:
+                radial-gradient(circle at 28% 28%, rgba(255,255,255,0.56) 0 10%, rgba(255,255,255,0.12) 28%, rgba(255,255,255,0) 56%),
+                radial-gradient(circle at 68% 72%, rgba(34,141,255,0.32) 0 12%, rgba(34,141,255,0) 60%);
+            filter: blur(6px);
             opacity: 0.9;
+            transform: translate3d(0, 0, 0);
+            animation: yan-swim calc(var(--yan-float-duration) * 1.15) ease-in-out infinite;
             pointer-events: none;
         }
         #yan-ball::after {
             content: "";
             position: absolute;
-            inset: 14px 10px 8px;
+            inset: 12% 16% 50% 16%;
             border-radius: 50%;
-            background: radial-gradient(circle at 50% 65%, rgba(255,255,255,0.24), rgba(255,255,255,0));
-            filter: blur(2px);
+            background: linear-gradient(to bottom, rgba(255,255,255,0.72), rgba(255,255,255,0));
+            filter: blur(1px);
+            opacity: 0.95;
+            animation: yan-sheen 2.7s ease-in-out infinite;
             pointer-events: none;
+        }
+        #yan-ball span {
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.16);
         }
         #yan-ball:hover {
             filter: saturate(1.05) brightness(1.03);
             box-shadow:
-                0 20px 34px rgba(8, 72, 170, 0.3),
-                inset 0 1px 3px rgba(255,255,255,0.38),
-                inset 0 -8px 16px rgba(0,0,0,0.12);
+                0 20px 38px rgba(8, 72, 170, 0.32),
+                inset 0 1px 3px rgba(255,255,255,0.5),
+                inset 0 -10px 18px rgba(0,0,0,0.12);
         }
         #yan-ball.dragging {
             cursor: grabbing;
             animation: none;
-            transform: scale(1.15);
+            transform: scale(1.08);
             box-shadow:
-                0 22px 38px rgba(8, 72, 170, 0.34),
-                inset 0 1px 3px rgba(255,255,255,0.38),
-                inset 0 -8px 16px rgba(0,0,0,0.12);
+                0 24px 42px rgba(8, 72, 170, 0.35),
+                inset 0 1px 3px rgba(255,255,255,0.5),
+                inset 0 -10px 18px rgba(0,0,0,0.12);
         }
         #yan-ball.was-dragged {
             animation: yan-settle 0.22s ease-out;
         }
+        #yan-ball.releasing {
+            animation: yan-release 0.36s cubic-bezier(.2,.8,.2,1);
+        }
         #yan-panel {
             position: fixed;
-            width: 300px;
-            background: rgba(255,255,255,0.96);
-            border-radius: 18px;
-            box-shadow: 0 18px 50px rgba(0,0,0,0.18);
-            border: 1px solid rgba(255,255,255,0.7);
-            backdrop-filter: blur(10px);
-            display: none;
+            width: var(--yan-panel-width);
+            background: rgba(255,255,255,var(--yan-panel-opacity));
+            border-radius: 22px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.18);
+            border: 1px solid rgba(255,255,255,0.72);
+            backdrop-filter: blur(14px);
             z-index: 9999998;
             overflow: hidden;
             font-family: sans-serif;
+            opacity: 0;
+            transform: translateY(14px) scale(0.96);
+            transition: opacity 220ms ease, transform 260ms cubic-bezier(.2,.9,.2,1);
+            pointer-events: none;
         }
-        .yan-header { padding: 15px; background: linear-gradient(180deg, #fafcff 0%, #f2f7ff 100%); border-bottom: 1px solid #eef2fb; }
-        .yan-title { font-weight: bold; font-size: 16px; color: #23364f; display: block; }
-        .yan-btn { width: 100%; padding: 14px 20px; border: none; cursor: pointer; font-weight: 600; font-size: 14px; color: #fff; text-align: left; }
-        #btn-export { background: #34495e; }
-        #btn-import { background: #2ecc71; }
-        #yan-log { height: 160px; background: #222; color: #00ff00; overflow-y: auto; padding: 12px; font-size: 12px; font-family: monospace; }
-        @keyframes yan-float {
-            0%, 100% { transform: translateY(0) rotate(-2deg); }
-            50% { transform: translateY(-6px) rotate(2deg); }
+        #yan-panel.is-open {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+        .yan-panel-shell {
+            display: flex;
+            flex-direction: column;
+            max-height: min(82vh, 760px);
+        }
+        .yan-header {
+            padding: 14px 16px 12px;
+            background: linear-gradient(180deg, #fafcff 0%, #eff5ff 100%);
+            border-bottom: 1px solid #e8eef9;
+        }
+        .yan-header-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .yan-title-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .yan-title {
+            font-weight: 800;
+            font-size: 16px;
+            color: #20324a;
+            display: block;
+            letter-spacing: 0.01em;
+        }
+        .yan-subtitle {
+            font-size: 12px;
+            color: #62738b;
+            line-height: 1.4;
+        }
+        .yan-close {
+            border: none;
+            background: rgba(27, 52, 89, 0.08);
+            color: #20324a;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            flex: 0 0 auto;
+        }
+        .yan-body {
+            padding: 14px;
+            overflow: auto;
+        }
+        .yan-intro {
+            display: grid;
+            gap: 6px;
+            margin-top: 10px;
+        }
+        .yan-intro-item {
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #5d6f86;
+        }
+        .yan-intro-index {
+            flex: 0 0 auto;
+            min-width: 20px;
+            height: 20px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 800;
+            color: #fff;
+            background: linear-gradient(135deg, #3e76ff 0%, #1a57e8 100%);
+            box-shadow: 0 8px 16px rgba(34, 89, 226, 0.14);
+        }
+        .yan-intro-text strong {
+            color: #21314a;
+        }
+        .yan-tabs {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            padding: 10px 14px 0;
+        }
+        .yan-tab {
+            border: 1px solid #e6ecf6;
+            background: #f8fbff;
+            color: #42526b;
+            border-radius: 999px;
+            padding: 10px 12px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: transform 160ms ease, background 160ms ease, color 160ms ease, border-color 160ms ease;
+        }
+        .yan-tab:hover {
+            transform: translateY(-1px);
+            background: #eef4ff;
+            border-color: #cfdcf8;
+        }
+        .yan-tab.is-active {
+            background: linear-gradient(135deg, #3e76ff 0%, #1a57e8 100%);
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 10px 22px rgba(34, 89, 226, 0.18);
+        }
+        .yan-page {
+            display: none;
+            animation: yan-page-in 180ms ease-out;
+        }
+        .yan-page.is-active {
+            display: block;
+        }
+        .yan-section {
+            border: 1px solid #edf1f7;
+            background: #fff;
+            border-radius: 18px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+        .yan-section-title {
+            padding: 10px 14px 8px;
+            font-size: 13px;
+            font-weight: 800;
+            color: #21314a;
+            background: linear-gradient(180deg, #fbfcfe 0%, #f7f9fd 100%);
+            border-bottom: 1px solid #edf1f7;
+            letter-spacing: 0.02em;
+        }
+        .yan-section-desc {
+            padding: 10px 14px 0;
+            font-size: 12px;
+            line-height: 1.55;
+            color: #718197;
+        }
+        .yan-action-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            padding: 12px 14px 14px;
+        }
+        .yan-btn {
+            width: 100%;
+            padding: 13px 16px;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 14px;
+            color: #fff;
+            text-align: left;
+            border-radius: 14px;
+            box-shadow: 0 8px 18px rgba(0,0,0,0.1);
+            transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+        }
+        .yan-btn:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.03);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.14);
+        }
+        .yan-btn:active {
+            transform: translateY(0);
+        }
+        #btn-export { background: linear-gradient(135deg, #364a63 0%, #243449 100%); }
+        #btn-import { background: linear-gradient(135deg, #25b46b 0%, #18a35d 100%); }
+        #btn-reset { background: linear-gradient(135deg, #f59b23 0%, #e77b12 100%); }
+        .yan-settings {
+            display: grid;
+            gap: 12px;
+            padding: 12px 14px 14px;
+        }
+        .yan-field {
+            display: grid;
+            gap: 8px;
+        }
+        .yan-field-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            font-size: 12px;
+            color: #42526b;
+        }
+        .yan-field-label {
+            font-weight: 700;
+            color: #22324a;
+        }
+        .yan-field-value {
+            font-variant-numeric: tabular-nums;
+            color: #61738b;
+        }
+        .yan-range {
+            width: 100%;
+            margin: 0;
+            accent-color: #3f79ff;
+        }
+        .yan-switch {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 14px;
+            border: 1px solid #edf1f7;
+            border-radius: 14px;
+            background: #fbfcfe;
+        }
+        .yan-switch small {
+            display: block;
+            color: #7a8797;
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+        .yan-switch input {
+            width: 18px;
+            height: 18px;
+        }
+        #yan-log {
+            height: 160px;
+            background: #20242a;
+            color: #89ff9c;
+            overflow-y: auto;
+            padding: 12px;
+            font-size: 12px;
+            font-family: monospace;
+            border-radius: 0 0 18px 18px;
+        }
+        .yan-log-frame {
+            border: 1px solid #edf1f7;
+            border-radius: 18px;
+            overflow: hidden;
+            background: #20242a;
+        }
+        @keyframes yan-morph {
+            0%, 100% {
+                border-radius: 46% 54% 52% 48% / 44% 42% 58% 56%;
+                transform: translate3d(0, 0, 0) rotate(-2deg);
+            }
+            25% {
+                border-radius: 52% 48% 41% 59% / 50% 58% 42% 50%;
+                transform: translate3d(0, -4px, 0) rotate(1deg);
+            }
+            50% {
+                border-radius: 42% 58% 56% 44% / 58% 46% 54% 42%;
+                transform: translate3d(0, 2px, 0) rotate(2deg);
+            }
+            75% {
+                border-radius: 58% 42% 48% 52% / 42% 56% 44% 58%;
+                transform: translate3d(0, -2px, 0) rotate(-1deg);
+            }
+        }
+        @keyframes yan-swim {
+            0%, 100% { transform: translate3d(-6px, -2px, 0) scale(1); }
+            33% { transform: translate3d(5px, 3px, 0) scale(1.03); }
+            66% { transform: translate3d(-2px, 5px, 0) scale(1.01); }
+        }
+        @keyframes yan-sheen {
+            0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.95; }
+            50% { transform: translate3d(2px, 4px, 0) scale(0.98); opacity: 0.8; }
         }
         @keyframes yan-breathe {
             0%, 100% { filter: saturate(1) brightness(1); }
             50% { filter: saturate(1.08) brightness(1.03); }
         }
         @keyframes yan-settle {
-            0% { transform: scale(1.18); }
+            0% { transform: scale(1.12); }
             70% { transform: scale(0.98); }
             100% { transform: scale(1); }
+        }
+        @keyframes yan-release {
+            0% { transform: scale(1.05); }
+            40% { transform: scale(0.96); }
+            100% { transform: scale(1); }
+        }
+        @keyframes yan-drift {
+            0%, 100% { filter: hue-rotate(0deg) saturate(1); }
+            50% { filter: hue-rotate(10deg) saturate(1.08); }
+        }
+        @keyframes yan-page-in {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #yan-ball,
+            #yan-ball::before,
+            #yan-ball::after,
+            #yan-panel {
+                animation: none !important;
+                transition-duration: 0.01ms !important;
+            }
         }
     `);
 
@@ -145,40 +442,111 @@
         }
     };
 
-    const BALL_STATE_KEY = 'chaoxing-ai-assistant.ball-position.v1';
-    const BALL_SIZE = 64;
+    const STORAGE_KEYS = {
+        ballPosition: 'chaoxing-ai-assistant.ball-position.v2',
+        settings: 'chaoxing-ai-assistant.ui-settings.v2'
+    };
     const DEFAULT_MARGIN = 20;
+    const DEFAULT_SETTINGS = {
+        ballSize: 64,
+        floatDuration: 4.8,
+        panelWidth: 360,
+        panelOpacity: 97,
+        rememberPosition: true,
+        reducedMotion: false,
+        autoOpenPage: 'basic'
+    };
 
     const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
+    const safeParse = (text) => {
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            return null;
+        }
+    };
+
+    const loadSettings = () => {
+        const raw = safeParse(localStorage.getItem(STORAGE_KEYS.settings) || '');
+        const merged = { ...DEFAULT_SETTINGS, ...(raw || {}) };
+        merged.ballSize = clamp(Number(merged.ballSize) || DEFAULT_SETTINGS.ballSize, 52, 92);
+        merged.floatDuration = clamp(Number(merged.floatDuration) || DEFAULT_SETTINGS.floatDuration, 2.8, 8);
+        merged.panelWidth = clamp(Number(merged.panelWidth) || DEFAULT_SETTINGS.panelWidth, 300, 480);
+        merged.panelOpacity = clamp(Number(merged.panelOpacity) || DEFAULT_SETTINGS.panelOpacity, 85, 100);
+        merged.rememberPosition = Boolean(merged.rememberPosition);
+        merged.reducedMotion = Boolean(merged.reducedMotion);
+        merged.autoOpenPage = ['basic', 'output', 'settings'].includes(merged.autoOpenPage) ? merged.autoOpenPage : DEFAULT_SETTINGS.autoOpenPage;
+        return merged;
+    };
+
+    const saveSettings = (settings) => {
+        localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings));
+    };
+
+    let uiSettings = loadSettings();
+
+    const getBallSize = () => uiSettings.ballSize;
+
     const getDefaultBallPosition = () => ({
         left: DEFAULT_MARGIN,
-        top: Math.max(DEFAULT_MARGIN, window.innerHeight - BALL_SIZE - 80)
+        top: Math.max(DEFAULT_MARGIN, window.innerHeight - getBallSize() - 80)
     });
 
     const loadBallPosition = () => {
-        try {
-            const raw = localStorage.getItem(BALL_STATE_KEY);
-            if (!raw) return null;
-            const parsed = JSON.parse(raw);
-            if (Number.isFinite(parsed.left) && Number.isFinite(parsed.top)) {
-                return parsed;
-            }
-        } catch (e) {}
+        if (!uiSettings.rememberPosition) return null;
+        const parsed = safeParse(localStorage.getItem(STORAGE_KEYS.ballPosition) || '');
+        if (parsed && Number.isFinite(parsed.left) && Number.isFinite(parsed.top)) {
+            return parsed;
+        }
         return null;
     };
 
     const saveBallPosition = (ball) => {
+        if (!uiSettings.rememberPosition) {
+            localStorage.removeItem(STORAGE_KEYS.ballPosition);
+            return;
+        }
         const rect = ball.getBoundingClientRect();
-        localStorage.setItem(BALL_STATE_KEY, JSON.stringify({
+        localStorage.setItem(STORAGE_KEYS.ballPosition, JSON.stringify({
             left: Math.round(rect.left),
             top: Math.round(rect.top)
         }));
     };
 
+    const applyBallStyle = (ball) => {
+        const size = getBallSize();
+        ball.style.width = `${size}px`;
+        ball.style.height = `${size}px`;
+        ball.style.fontSize = `${clamp(Math.round(size * 0.2), 11, 16)}px`;
+        ball.style.setProperty('--yan-float-duration', `${uiSettings.floatDuration}s`);
+        ball.style.animation = uiSettings.reducedMotion
+            ? 'none'
+            : `yan-morph ${uiSettings.floatDuration}s ease-in-out infinite, yan-breathe 3.1s ease-in-out infinite`;
+    };
+
+    const applyPanelStyle = (panel) => {
+        document.documentElement.style.setProperty('--yan-panel-width', `${uiSettings.panelWidth}px`);
+        document.documentElement.style.setProperty('--yan-panel-opacity', `${uiSettings.panelOpacity / 100}`);
+        panel.style.width = `${uiSettings.panelWidth}px`;
+    };
+
+    const applySettingsToUI = (ball, panel, controls = {}) => {
+        applyBallStyle(ball);
+        applyPanelStyle(panel);
+        if (controls.ballSize) controls.ballSize.value = String(uiSettings.ballSize);
+        if (controls.floatDuration) controls.floatDuration.value = String(uiSettings.floatDuration);
+        if (controls.panelWidth) controls.panelWidth.value = String(uiSettings.panelWidth);
+        if (controls.panelOpacity) controls.panelOpacity.value = String(uiSettings.panelOpacity);
+        if (controls.rememberPosition) controls.rememberPosition.checked = uiSettings.rememberPosition;
+        if (controls.reducedMotion) controls.reducedMotion.checked = uiSettings.reducedMotion;
+        if (controls.autoOpenPage) controls.autoOpenPage.value = uiSettings.autoOpenPage;
+    };
+
     const applyBallPosition = (ball, left, top) => {
-        const maxLeft = Math.max(DEFAULT_MARGIN, window.innerWidth - BALL_SIZE - DEFAULT_MARGIN);
-        const maxTop = Math.max(DEFAULT_MARGIN, window.innerHeight - BALL_SIZE - DEFAULT_MARGIN);
+        const size = getBallSize();
+        const maxLeft = Math.max(DEFAULT_MARGIN, window.innerWidth - size - DEFAULT_MARGIN);
+        const maxTop = Math.max(DEFAULT_MARGIN, window.innerHeight - size - DEFAULT_MARGIN);
         ball.style.left = `${clamp(left, DEFAULT_MARGIN, maxLeft)}px`;
         ball.style.top = `${clamp(top, DEFAULT_MARGIN, maxTop)}px`;
         ball.style.right = 'auto';
@@ -191,8 +559,9 @@
         const gap = 14;
         let left = ballRect.left;
         let top = ballRect.top - panelRect.height - gap;
+        const below = top < DEFAULT_MARGIN;
 
-        if (top < DEFAULT_MARGIN) {
+        if (below) {
             top = ballRect.bottom + gap;
         }
 
@@ -202,29 +571,258 @@
         panel.style.left = `${left}px`;
         panel.style.top = `${top}px`;
         panel.style.bottom = 'auto';
+        panel.style.transformOrigin = below ? 'left top' : 'left bottom';
+    };
+
+    const createRangeField = (id, label, min, max, step, unit, valueText) => `
+        <div class="yan-field">
+            <div class="yan-field-head">
+                <span class="yan-field-label">${label}</span>
+                <span class="yan-field-value"><span id="${id}-value">${valueText}</span>${unit}</span>
+            </div>
+            <input id="${id}" class="yan-range" type="range" min="${min}" max="${max}" step="${step}">
+        </div>
+    `;
+
+    const createSelectField = (id, label, options) => `
+        <div class="yan-field">
+            <div class="yan-field-head">
+                <span class="yan-field-label">${label}</span>
+                <span class="yan-field-value">切换面板默认页</span>
+            </div>
+            <select id="${id}" style="width:100%;padding:11px 12px;border:1px solid #dfe6f1;border-radius:14px;background:#fff;color:#22324a;font-weight:700;outline:none;">
+                ${options.map((opt) => `<option value="${opt.value}">${opt.label}</option>`).join('')}
+            </select>
+        </div>
+    `;
+
+    const renderSettings = (ball, panel, controls) => {
+        controls.ballSize = document.getElementById('yan-setting-ball-size');
+        controls.floatDuration = document.getElementById('yan-setting-float-duration');
+        controls.panelWidth = document.getElementById('yan-setting-panel-width');
+        controls.panelOpacity = document.getElementById('yan-setting-panel-opacity');
+        controls.rememberPosition = document.getElementById('yan-setting-remember');
+        controls.reducedMotion = document.getElementById('yan-setting-motion');
+        controls.autoOpenPage = document.getElementById('yan-setting-default-page');
+        applySettingsToUI(ball, panel, controls);
+
+        const updateRangeLabel = (id, value) => {
+            const node = document.getElementById(`${id}-value`);
+            if (node) node.textContent = value;
+        };
+
+        const commitSettings = () => {
+            saveSettings(uiSettings);
+            applySettingsToUI(ball, panel, controls);
+            if (panel.style.display === 'block') {
+                positionPanel(ball, panel);
+            }
+        };
+
+        controls.ballSize.addEventListener('input', () => {
+            uiSettings.ballSize = clamp(Number(controls.ballSize.value) || DEFAULT_SETTINGS.ballSize, 52, 92);
+            updateRangeLabel('yan-setting-ball-size', uiSettings.ballSize);
+            const rect = ball.getBoundingClientRect();
+            applySettingsToUI(ball, panel, controls);
+            applyBallPosition(ball, rect.left, rect.top);
+            saveBallPosition(ball);
+            if (panel.style.display === 'block') positionPanel(ball, panel);
+            saveSettings(uiSettings);
+        });
+
+        controls.floatDuration.addEventListener('input', () => {
+            uiSettings.floatDuration = clamp(Number(controls.floatDuration.value) || DEFAULT_SETTINGS.floatDuration, 2.8, 8);
+            updateRangeLabel('yan-setting-float-duration', uiSettings.floatDuration.toFixed(1));
+            commitSettings();
+        });
+
+        controls.panelWidth.addEventListener('input', () => {
+            uiSettings.panelWidth = clamp(Number(controls.panelWidth.value) || DEFAULT_SETTINGS.panelWidth, 300, 480);
+            updateRangeLabel('yan-setting-panel-width', uiSettings.panelWidth);
+            commitSettings();
+        });
+
+        controls.panelOpacity.addEventListener('input', () => {
+            uiSettings.panelOpacity = clamp(Number(controls.panelOpacity.value) || DEFAULT_SETTINGS.panelOpacity, 85, 100);
+            updateRangeLabel('yan-setting-panel-opacity', uiSettings.panelOpacity);
+            commitSettings();
+        });
+
+        controls.rememberPosition.addEventListener('change', () => {
+            uiSettings.rememberPosition = controls.rememberPosition.checked;
+            if (!uiSettings.rememberPosition) {
+                localStorage.removeItem(STORAGE_KEYS.ballPosition);
+            } else {
+                saveBallPosition(ball);
+            }
+            commitSettings();
+        });
+
+        controls.reducedMotion.addEventListener('change', () => {
+            uiSettings.reducedMotion = controls.reducedMotion.checked;
+            commitSettings();
+        });
+
+        controls.autoOpenPage.addEventListener('change', () => {
+            uiSettings.autoOpenPage = controls.autoOpenPage.value;
+            commitSettings();
+        });
+
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            uiSettings = { ...DEFAULT_SETTINGS };
+            saveSettings(uiSettings);
+            localStorage.removeItem(STORAGE_KEYS.ballPosition);
+            const defaultPosition = getDefaultBallPosition();
+            applySettingsToUI(ball, panel, controls);
+            applyBallPosition(ball, defaultPosition.left, defaultPosition.top);
+            if (panel.style.display === 'block') positionPanel(ball, panel);
+            updateRangeLabel('yan-setting-ball-size', uiSettings.ballSize);
+            updateRangeLabel('yan-setting-float-duration', uiSettings.floatDuration.toFixed(1));
+            updateRangeLabel('yan-setting-panel-width', uiSettings.panelWidth);
+            updateRangeLabel('yan-setting-panel-opacity', uiSettings.panelOpacity);
+            controls.rememberPosition.checked = uiSettings.rememberPosition;
+            controls.reducedMotion.checked = uiSettings.reducedMotion;
+            controls.autoOpenPage.value = uiSettings.autoOpenPage;
+            log('↺ 已恢复默认参数');
+        });
+
+        updateRangeLabel('yan-setting-ball-size', uiSettings.ballSize);
+        updateRangeLabel('yan-setting-float-duration', uiSettings.floatDuration.toFixed(1));
+        updateRangeLabel('yan-setting-panel-width', uiSettings.panelWidth);
+        updateRangeLabel('yan-setting-panel-opacity', uiSettings.panelOpacity);
     };
 
     function init() {
         if (document.getElementById('yan-ball')) return;
         const ball = document.createElement('div');
         ball.id = 'yan-ball';
-        ball.innerText = 'AI 助手';
+        ball.innerHTML = '<span>AI 助手</span>';
         document.body.appendChild(ball);
-
-        const storedPosition = loadBallPosition() || getDefaultBallPosition();
-        applyBallPosition(ball, storedPosition.left, storedPosition.top);
 
         const panel = document.createElement('div');
         panel.id = 'yan-panel';
         panel.innerHTML = `
-            <div class="yan-header">
-                <span class="yan-title">超星全能助手 V24.3</span>
+            <div class="yan-panel-shell">
+                <div class="yan-header">
+                    <div class="yan-header-top">
+                        <div class="yan-title-wrap">
+                            <span class="yan-title">超星全能助手</span>
+                            <span class="yan-subtitle">拖动球体可以换位置，面板里分成基本操作、输出和设置三块。</span>
+                            <div class="yan-intro">
+                                <div class="yan-intro-item">
+                                    <span class="yan-intro-index">1</span>
+                                    <div class="yan-intro-text"><strong>基本操作</strong>：导出题目、一键回填、恢复默认参数。</div>
+                                </div>
+                                <div class="yan-intro-item">
+                                    <span class="yan-intro-index">2</span>
+                                    <div class="yan-intro-text"><strong>输出</strong>：看导出内容、回填结果和解析日志。</div>
+                                </div>
+                                <div class="yan-intro-item">
+                                    <span class="yan-intro-index">3</span>
+                                    <div class="yan-intro-text"><strong>设置</strong>：调浮球大小、动效、透明度和默认打开页。</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex;align-items:flex-start;gap:8px;">
+                            <button id="yan-close" class="yan-close" type="button" aria-label="关闭面板">×</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="yan-body">
+                    <div class="yan-tabs">
+                        <button class="yan-tab is-active" data-page="basic" type="button">基本操作</button>
+                        <button class="yan-tab" data-page="output" type="button">输出</button>
+                        <button class="yan-tab" data-page="settings" type="button">设置</button>
+                    </div>
+
+                    <div class="yan-page is-active" data-page-panel="basic">
+                        <div class="yan-section">
+                            <div class="yan-section-title">基本操作</div>
+                            <div class="yan-section-desc">这里放最常用的操作，尽量少打扰你。</div>
+                            <div class="yan-action-grid">
+                                <button id="btn-export" class="yan-btn">📤 导出题目</button>
+                                <button id="btn-import" class="yan-btn">📥 一键回填</button>
+                                <button id="btn-reset" class="yan-btn">↺ 恢复默认参数</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="yan-page" data-page-panel="output">
+                        <div class="yan-section">
+                            <div class="yan-section-title">输出</div>
+                            <div class="yan-section-desc">导出内容、回填结果和解析日志都在这里看。</div>
+                            <div class="yan-log-frame">
+                                <div id="yan-log">就绪...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="yan-page" data-page-panel="settings">
+                        <div class="yan-section">
+                            <div class="yan-section-title">设置</div>
+                            <div class="yan-section-desc">这些参数会立即生效并保存到本地。</div>
+                            <div class="yan-settings">
+                                ${createRangeField('yan-setting-ball-size', '浮球大小', 52, 92, 1, ' px', uiSettings.ballSize)}
+                                ${createRangeField('yan-setting-float-duration', '浮动速度', 2.8, 8, 0.1, ' s', uiSettings.floatDuration.toFixed(1))}
+                                ${createRangeField('yan-setting-panel-width', '面板宽度', 300, 480, 10, ' px', uiSettings.panelWidth)}
+                                ${createRangeField('yan-setting-panel-opacity', '面板透明度', 85, 100, 1, ' %', uiSettings.panelOpacity)}
+                                ${createSelectField('yan-setting-default-page', '默认打开页', [
+                                    { value: 'basic', label: '基本操作' },
+                                    { value: 'output', label: '输出' },
+                                    { value: 'settings', label: '设置' }
+                                ])}
+                                <label class="yan-switch">
+                                    <div>
+                                        <strong>记住浮球位置</strong>
+                                        <small>关闭后，刷新页面会回到默认位置。</small>
+                                    </div>
+                                    <input id="yan-setting-remember" type="checkbox">
+                                </label>
+                                <label class="yan-switch">
+                                    <div>
+                                        <strong>减少动效</strong>
+                                        <small>适合想要更安静的视觉反馈时开启。</small>
+                                    </div>
+                                    <input id="yan-setting-motion" type="checkbox">
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <button id="btn-export" class="yan-btn">📤 1. 导出题目 (含解析要求)</button>
-            <button id="btn-import" class="yan-btn">📥 2. 一键回填 (同步解析)</button>
-            <div id="yan-log">就绪...</div>
         `;
         document.body.appendChild(panel);
+
+        const controls = {};
+        applySettingsToUI(ball, panel, controls);
+        renderSettings(ball, panel, controls);
+
+        const pageMap = Array.from(panel.querySelectorAll('.yan-page'));
+        const tabButtons = Array.from(panel.querySelectorAll('.yan-tab'));
+
+        const setPage = (page) => {
+            tabButtons.forEach((btn) => btn.classList.toggle('is-active', btn.dataset.page === page));
+            pageMap.forEach((node) => node.classList.toggle('is-active', node.dataset.pagePanel === page));
+            if (panel.classList.contains('is-open')) {
+                positionPanel(ball, panel);
+            }
+        };
+
+        const openPanelTo = (page) => {
+            setPage(page);
+            panel.style.display = 'block';
+            panel.getBoundingClientRect();
+            positionPanel(ball, panel);
+            requestAnimationFrame(() => panel.classList.add('is-open'));
+        };
+
+        tabButtons.forEach((btn) => {
+            btn.addEventListener('click', () => {
+                setPage(btn.dataset.page);
+                uiSettings.autoOpenPage = btn.dataset.page;
+                saveSettings(uiSettings);
+            });
+        });
 
         const drag = {
             active: false,
@@ -234,23 +832,38 @@
             originLeft: 0,
             originTop: 0
         };
+        let panelHideTimer = null;
 
         const showPanel = () => {
-            panel.style.display = 'block';
-            positionPanel(ball, panel);
+            if (panelHideTimer) {
+                clearTimeout(panelHideTimer);
+                panelHideTimer = null;
+            }
+            openPanelTo(uiSettings.autoOpenPage);
         };
 
         const hidePanel = () => {
-            panel.style.display = 'none';
+            panel.classList.remove('is-open');
+            panelHideTimer = setTimeout(() => {
+                if (!panel.classList.contains('is-open')) {
+                    panel.style.display = 'none';
+                }
+            }, 260);
         };
 
         const togglePanel = () => {
-            if (panel.style.display === 'block') {
+            if (panel.classList.contains('is-open')) {
                 hidePanel();
             } else {
                 showPanel();
             }
         };
+
+        document.getElementById('yan-close').addEventListener('click', hidePanel);
+
+        const storedPosition = loadBallPosition() || getDefaultBallPosition();
+        applyBallStyle(ball);
+        applyBallPosition(ball, storedPosition.left, storedPosition.top);
 
         ball.addEventListener('pointerdown', (event) => {
             if (event.button !== 0) return;
@@ -277,7 +890,7 @@
             if (!drag.moved) return;
 
             applyBallPosition(ball, drag.originLeft + dx, drag.originTop + dy);
-            if (panel.style.display === 'block') {
+            if (panel.classList.contains('is-open')) {
                 positionPanel(ball, panel);
             }
         });
@@ -293,10 +906,11 @@
                 saveBallPosition(ball);
                 ball.classList.remove('dragging');
                 ball.classList.add('was-dragged');
-                if (panel.style.display === 'block') {
+                ball.classList.add('releasing');
+                if (panel.classList.contains('is-open')) {
                     positionPanel(ball, panel);
                 }
-                setTimeout(() => ball.classList.remove('was-dragged'), 240);
+                setTimeout(() => ball.classList.remove('was-dragged', 'releasing'), 260);
                 return;
             }
 
@@ -312,10 +926,14 @@
             const rect = ball.getBoundingClientRect();
             applyBallPosition(ball, rect.left, rect.top);
             saveBallPosition(ball);
-            if (panel.style.display === 'block') {
+            if (panel.classList.contains('is-open')) {
                 positionPanel(ball, panel);
             }
         });
+
+        if (!uiSettings.rememberPosition) {
+            localStorage.removeItem(STORAGE_KEYS.ballPosition);
+        }
 
         // 导出逻辑：增加解析要求
         document.getElementById('btn-export').onclick = () => {
