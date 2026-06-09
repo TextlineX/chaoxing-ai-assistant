@@ -6,7 +6,7 @@
 // @downloadURL  https://raw.githubusercontent.com/TextlineX/chaoxing-ai-assistant/main/%E8%B6%85%E6%98%9F%E4%BD%9C%E4%B8%9A%20%E5%8A%A9%E6%89%8B.user.js
 // @updateURL    https://raw.githubusercontent.com/TextlineX/chaoxing-ai-assistant/main/%E8%B6%85%E6%98%9F%E4%BD%9C%E4%B8%9A%20%E5%8A%A9%E6%89%8B.user.js
 // @icon         https://raw.githubusercontent.com/TextlineX/chaoxing-ai-assistant/main/docs/icon.svg
-// @version      24.6
+// @version      24.6.3
 // @description  用于超星学习通作业页面的用户脚本，支持题目导出、AI 回填、UEditor 解锁、拖动浮球与可配置面板。
 // @author       Textline
 // @license      MIT
@@ -415,9 +415,10 @@
         .yan-btn:active {
             transform: translateY(0);
         }
-        #btn-export { background: linear-gradient(135deg, #364a63 0%, #243449 100%); }
-        #btn-import { background: linear-gradient(135deg, #25b46b 0%, #18a35d 100%); }
-        #btn-reset { background: linear-gradient(135deg, #f59b23 0%, #e77b12 100%); }
+        #btn-export { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
+        #btn-import { background: linear-gradient(135deg, #10b981 0%, #047857 100%); }
+        #btn-export-answer { background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%); }
+        #btn-reset { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
         #btn-wizard {
             background: linear-gradient(135deg, #f8fbff 0%, #eef4ff 100%);
             color: #243449;
@@ -882,7 +883,7 @@
                         </div>
                         <div class="yan-wizard-step">
                             <div class="yan-wizard-step-head"><span class="yan-wizard-step-number">2</span> 输出</div>
-                            <p>看导出内容、回填结果和解析日志。这里负责把过程和结果展示清楚。</p>
+                            <p>看导出内容、回填结果 and 解析日志。这里负责把过程和结果展示清楚。</p>
                         </div>
                         <div class="yan-wizard-step">
                             <div class="yan-wizard-step-head"><span class="yan-wizard-step-number">3</span> 设置</div>
@@ -927,6 +928,7 @@
                             <div class="yan-action-grid">
                                 <button id="btn-export" class="yan-btn">📤 导出题目</button>
                                 <button id="btn-import" class="yan-btn">📥 一键回填</button>
+                                <button id="btn-export-answer" class="yan-btn">📝 导出答案</button>
                                 <button id="btn-reset" class="yan-btn">↺ 恢复默认参数</button>
                             </div>
                         </div>
@@ -1151,21 +1153,78 @@
             setTimeout(showWizard, 300);
         }
 
-        // 导出逻辑：增加解析要求
+        // 导出题目逻辑
         document.getElementById('btn-export').onclick = () => {
             const items = document.querySelectorAll('.questionLi');
             const prompt = `分析以下题目并严格返回JSON数组。必须包含"analysis"字段给出简短理由。格式：[{"questionId":"ID","answer":"内容","analysis":"解析"}]题目：\n` +
                 Array.from(items).map((q, i) => {
                     const id = q.getAttribute('data') || q.id.replace('question', '');
                     const title = q.querySelector('h3')?.innerText.replace(/\s+/g, ' ').trim() || "";
-                    const opts = Array.from(q.querySelectorAll('.answerBg')).map(o => o.innerText.trim()).join('|');
+                    const opts = Array.from(q.querySelectorAll('.answerBg, .qtDetail li, .options li')).map(o => o.innerText.trim()).join('|');
                     return `[${i+1}] ID:${id} 题目:${title} 选项:${opts}`;
                 }).join('\n\n');
             GM_setClipboard(prompt);
-            log(`✅ 已导出 ${items.length} 题 (已要求AI生成解析)`);
+            log(`✅ 已导出 ${items.length} 题模板 (已复制到剪贴板)`);
         };
 
-        // 增强版回填逻辑：支持解析日志展示
+        // 📝 新增功能实现：导出完整答案为标准化 JSON 清单
+        document.getElementById('btn-export-answer').onclick = () => {
+            const items = document.querySelectorAll('.questionLi');
+            const answerList = [];
+
+            items.forEach((q) => {
+                const id = q.getAttribute('data') || q.id.replace('question', '');
+                
+                // 自动辨别题型
+                let type = q.getAttribute('typename') || "";
+                if (!type) {
+                    const typeText = q.querySelector('.colorShallow')?.innerText || "";
+                    const match = typeText.match(/\((.*?)\)/);
+                    type = match ? match[1] : "未知题型";
+                }
+
+                // 提取题目内容 (去掉题号和题型括号)
+                let title = q.querySelector('h3')?.innerText || "";
+                title = title.replace(/^\d+[\.\s]*/, '').replace(/\(.*?\)/, '').replace(/\s+/g, ' ').trim();
+
+                // 提取选项列表
+                const opts = Array.from(q.querySelectorAll('.answerBg, .qtDetail li, .options li')).map(o => o.innerText.replace(/\s+/g, ' ').trim());
+
+                // 提取正确答案和解析
+                let answer = "";
+                let analysis = "";
+
+                // 优先从查看页的DOM结构抓取答案和解析
+                const rightAnswerNode = q.querySelector('.rightAnswerContent, .colorGreen');
+                if (rightAnswerNode) {
+                    answer = rightAnswerNode.innerText.replace(/正确答案[:：]?\s*/, '').trim();
+                }
+                const analysisNode = q.querySelector('.divAnalysis, .analysisContent, .yan-analysis-content');
+                if (analysisNode) {
+                    analysis = analysisNode.innerText.replace(/🔍|📖|AI|解析[:：]?\s*/g, '').trim();
+                }
+
+                // 填空题如果是做题页，抓取当前输入值作为兜底答案
+                if (!answer && type.includes("填空")) {
+                    const inputs = Array.from(q.querySelectorAll('input[type="text"], textarea'));
+                    if (inputs.length) answer = inputs.map(i => i.value.trim()).join(' ; ');
+                }
+
+                answerList.push({
+                    questionId: id,
+                    type: type,
+                    question: title,
+                    options: opts,
+                    answer: answer || "未抓取到答案（非查看页或尚未提交）",
+                    analysis: analysis || "暂无解析"
+                });
+            });
+
+            GM_setClipboard(JSON.stringify(answerList, null, 4));
+            log(`📝 成功导出 ${answerList.length} 道题目的完整答案 JSON 清单！`);
+        };
+
+        // 增量融合版回填逻辑：修复了多选不回填的文本匹配Bug
         document.getElementById('btn-import').onclick = async () => {
             try {
                 let text = await navigator.clipboard.readText();
@@ -1175,10 +1234,8 @@
                     const qDom = document.querySelector(`.questionLi[data="${item.questionId}"], #question${item.questionId}, [data-qid="${item.questionId}"]`);
                     if (!qDom) continue;
 
-                    // 💡 在日志框显示解析内容
                     if (item.analysis) {
                         log(`💡 题${item.questionId}解析: ${item.analysis}`, "#eccc68");
-                        // 注入解析到题目末尾(避免重复注入)
                         const oldAnalysis = qDom.querySelector('.yan-analysis');
                         if (oldAnalysis) oldAnalysis.remove();
                         const analysisBox = document.createElement('div');
@@ -1199,23 +1256,48 @@
                             document.body.appendChild(s); s.remove();
                         });
                     } else {
-                        const ansStr = String(item.answer).toUpperCase();
+                        const ansStr = String(item.answer).toUpperCase().trim();
                         const opts = qDom.querySelectorAll('.answerBg, .answer_item, .options li');
 
                         for (let i = 0; i < opts.length; i++) {
                             const opt = opts[i];
+                            
+                            // 1. 原脚本核心识别逻辑
                             const label = opt.querySelector('.num_option, .num_option_dx, b')?.innerText.trim().replace('.', '') ||
                                           opt.getAttribute('data') || "";
 
-                            if (label && ansStr.includes(label)) {
+                            let isMatch = (label && ansStr.includes(label));
+
+                            // 2.1 强制利用 textContent 穿透 aria-hidden 获取可能丢失的选项字母 (A,B,C,D)
+                            if (!isMatch) {
+                                const subSpan = opt.querySelector('.num_option, .num_option_dx, b');
+                                const textLabel = (subSpan?.textContent || subSpan?.getAttribute('data') || "").trim().replace('.', '');
+
+                                if (textLabel && ansStr.includes(textLabel)) {
+                                    isMatch = true;
+                                }
+                                else if (type.includes("判断")) {
+                                    const optText = opt.innerText || opt.textContent || "";
+                                    if ((ansStr.includes("A") || ansStr.includes("对") || ansStr.includes("正确") || ansStr.includes("T")) && (optText.includes("对") || optText.includes("正"))) {
+                                        isMatch = true;
+                                    }
+                                    if ((ansStr.includes("B") || ansStr.includes("错") || ansStr.includes("错误") || ansStr.includes("F")) && (optText.includes("错") || optText.includes("误"))) {
+                                        isMatch = true;
+                                    }
+                                }
+                            }
+
+                            if (isMatch) {
                                 const s = document.createElement('script');
+                                // 核心修复：避免在二次封装字符串中使用模板字面量产生冲突，改用普通拼串
                                 s.textContent = `(function(){
-                                    var qid = "${item.questionId}";
-                                    var idx = ${i};
+                                    var qid = "` + item.questionId + `";
+                                    var idx = ` + i + `;
+                                    var isMultiple = ` + (type.includes("多选") ? "true" : "false") + `;
                                     var container = document.querySelector('.questionLi[data="' + qid + '"], #question' + qid);
                                     var el = container ? container.querySelectorAll('.answerBg, .answer_item, .options li')[idx] : null;
                                     if(el) {
-                                        if(typeof addMultipleChoice === 'function' && "${type}".includes("多选")) {
+                                        if(typeof addMultipleChoice === 'function' && isMultiple) {
                                             addMultipleChoice(el);
                                         } else if(typeof addChoice === 'function') {
                                             addChoice(el);
