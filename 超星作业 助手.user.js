@@ -6,7 +6,7 @@
 // @downloadURL  https://raw.githubusercontent.com/TextlineX/chaoxing-ai-assistant/main/%E8%B6%85%E6%98%9F%E4%BD%9C%E4%B8%9A%20%E5%8A%A9%E6%89%8B.user.js
 // @updateURL    https://raw.githubusercontent.com/TextlineX/chaoxing-ai-assistant/main/%E8%B6%85%E6%98%9F%E4%BD%9C%E4%B8%9A%20%E5%8A%A9%E6%89%8B.user.js
 // @icon         https://raw.githubusercontent.com/TextlineX/chaoxing-ai-assistant/main/docs/icon.svg
-// @version      24.5
+// @version      24.6
 // @description  用于超星学习通作业页面的用户脚本，支持题目导出、AI 回填、UEditor 解锁、拖动浮球与可配置面板。
 // @author       Textline
 // @license      MIT
