@@ -12,6 +12,7 @@
 // @license      MIT
 // @match        https://mooc1.chaoxing.com/mooc-ans/mooc2/work/view*
 // @match        https://mooc1.chaoxing.com/mooc-ans/mooc2/work/dowork*
+// @match        https://mooc1-api.chaoxing.com/mooc-ans/mooc2/work/view*
 // @grant        GM_setClipboard
 // @grant        GM_addStyle
 // @run-at       document-end
@@ -557,6 +558,25 @@
         @keyframes yan-page-in {
             from { opacity: 0; transform: translateY(6px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+        .yan-analysis {
+            margin-top: 10px;
+            padding: 10px 12px;
+            border-left: 3px solid #eccc68;
+            background: rgba(236, 204, 104, 0.08);
+            border-radius: 4px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #d4d4d4;
+        }
+        .yan-analysis-title {
+            color: #eccc68;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .yan-analysis-content {
+            white-space: pre-wrap;
+            word-break: break-word;
         }
         @media (prefers-reduced-motion: reduce) {
             #yan-ball,
@@ -1158,6 +1178,15 @@
                     // 💡 在日志框显示解析内容
                     if (item.analysis) {
                         log(`💡 题${item.questionId}解析: ${item.analysis}`, "#eccc68");
+                        // 注入解析到题目末尾(避免重复注入)
+                        const oldAnalysis = qDom.querySelector('.yan-analysis');
+                        if (oldAnalysis) oldAnalysis.remove();
+                        const analysisBox = document.createElement('div');
+                        analysisBox.className = 'yan-analysis';
+                        analysisBox.innerHTML = `<div class="yan-analysis-title">📖 AI 解析</div>` +
+                                                `<div class="yan-analysis-content"></div>`;
+                        analysisBox.querySelector('.yan-analysis-content').textContent = item.analysis;
+                        qDom.appendChild(analysisBox);
                     }
 
                     const type = qDom.getAttribute('typename') || "";
